@@ -1,7 +1,7 @@
 const { Request } = require('./request');
-const ProtoTx = require('./../proto/rpc/transaction_store/transaction_store_rpc_pb');
+const ProtoTx = require('./../proto/koinos/rpc/transaction_store/transaction_store_rpc_pb');
 
-class TransactionStore extends JSONRequest {
+class TransactionStore extends Request {
   constructor() {
     super(process.env.RPC_NODE);
   }

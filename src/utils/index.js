@@ -1,7 +1,7 @@
 // Logging levels: 1 = Error, 2 = Warning, 3 = Info, 4 = Debug
 function logger(msg, color) { 
 	if(color && log_colors[color]) {
-		msg = log_colors[color] + new Date().toLocaleString() + ' - ' + msg;
+		msg = log_colors[color] + new Date().toLocaleString() + ' - ' + msg + log_colors.Reset;
 	}
 	console.log(msg); 
 }

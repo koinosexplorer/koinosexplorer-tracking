@@ -1,19 +1,20 @@
+const _ = require('lodash');
+const dot = require('dot-object');
+
 // CONTROLLERS
-const { config_controller } = require('./controllers/config');
-const { block_controller } = require('./controllers/block');
-const { transaction_controller } = require('./controllers/transaction');
-const { contract_controller } = require('./controllers/contract');
+const GlobalController = require('./controllers/globals');
+const BlocksController = require('./controllers/blocks');
+const ContractsController = require('./controllers/contracts');
+const TxController = require('./controllers/transactions');
 
 // RPC
 const { chain } = require('./services/chain');
 const { block_store } = require('./services/block_store');
 
-// DB
-const ConfigsModel = require("./models/configs");
-
 // UTILS
 const { logger, timeout } = require('./utils');
-const _ = require('lodash')
+
+let global = new GlobalController();
 
 class Tracking {
   constructor() {
@@ -28,25 +29,72 @@ class Tracking {
   }
   
   async load_db() {
-    let _head_db = await ConfigsModel.query().findById('head_block');
-    this.head_db = _.get(_head_db, 'value', '{}') != '{}' ? JSON.parse(_.get(_head_db, 'value', 0)) : {};
+    let query_result = await global.getHead();
+    let result = {}
+    query_result.map(obj => result[obj.name] = obj.value)
+    dot.object(result);
+    this.head_db = result;
   }
 
   async sync_db() {
     // auto dispatch until it load the head info of chain rpc
-    if(this.head_chain == null && this.head_db == null) {
+    if(this.head_chain == null || this.head_db == null) {
       await timeout(1000);
       return this.sync_db();
     }
+    this.gen_next_block();
+  }
+
+  async gen_next_block() {
+    let cur_block_num = Number(_.get(this.head_chain, 'head_topology.height', '0'))
+    let last_block = Number(_.get(this.head_db, 'head_block', '0'))
     
-    // check if the chain block is the same as the db block
-    let chain_height_block = _.get(this.head_chain, 'head_topology.height', 0);
-    let db_height_block = _.get(this.head_db, 'head_topology.height', 5);
-    let diffBlocks = chain_height_block - db_height_block;
-    
+    // We are 20+ blocks behind!
+    if(cur_block_num >= last_block + 20) {
+      logger('Streaming is ' + (cur_block_num - last_block) + ' blocks behind!', 1, 'Red');
+    }
+
+    while(cur_block_num > last_block) {
+      await this.process_block(last_block + 1, cur_block_num);
+      last_block += 1;
+    }
+    // Attempt to load the next block after a 1 second delay (or faster if we're behind and need to catch up)
+		setTimeout(() => this.gen_next_block(), 1000);
+  }
+
+  async process_block(block_num, cur_block_num) {
+    logger(`Processing block [${block_num}], Head Block: ${cur_block_num}, Blocks to head: ${cur_block_num - block_num}`, block_num % 1000 == 0 ? 1 : 4);
+    let head_block_id = _.get(this.head_chain, 'head_topology.id', '');
+    let result_block
+    try {
+      result_block = await block_store.get_blocks_by_height(head_block_id, block_num, 1);
+    } catch (error) {
+      console.log(error)
+    }
+
+    let result = _.get(result_block, 'block_items[0]', null);
+    if(result) {
+      // controllers
+      let controllers_enabled = process.env.CONTROLLER_ENABLED.split(',');
+      if(controllers_enabled.indexOf('blocks') != -1) {
+        let blocks = new BlocksController();
+        await blocks.process_block(result);
+      }
+      if(controllers_enabled.indexOf('contracts') != -1) {
+        let contracts = new ContractsController();
+        await contracts.process_block(result);
+      }
+      if(controllers_enabled.indexOf('transactions') != -1) {
+        let tx = new TxController();
+        await tx.process_block(result);
+      }
+      // update db
+      await global.setHead(block_num)
+    }
   }
   
   async run() {
+    logger('staring', 'Green')
     await this.load_chain();
     await this.load_db();
     await this.sync_db();

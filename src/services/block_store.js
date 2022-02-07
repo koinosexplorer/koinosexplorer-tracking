@@ -1,5 +1,5 @@
 const { Request } = require('./request');
-const ProtoBlockStore = require('../proto/rpc/block_store/block_store_rpc_pb');
+const ProtoBlockStore = require('../proto/koinos/rpc/block_store/block_store_rpc_pb');
 
 class BlockStore extends Request {
   constructor() {
@@ -22,7 +22,7 @@ class BlockStore extends Request {
     message.setAncestorStartHeight(block_height)
     message.setNumBlocks(num_blocks)
     message.setReturnBlock(true)
-    message.setReturnReceipt(true)
+    message.setReturnReceipt(false)
     let data = message.toObject()
     return this.send("block_store.get_blocks_by_height", data);
   }

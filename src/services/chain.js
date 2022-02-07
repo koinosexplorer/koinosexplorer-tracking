@@ -1,5 +1,5 @@
 const { Request } = require('./request');
-const ProtoChain = require('./../proto/rpc/chain/chain_rpc_pb');
+const ProtoChain = require('./../proto/koinos/rpc/chain/chain_rpc_pb');
 
 class Chain extends Request {
   constructor() {
