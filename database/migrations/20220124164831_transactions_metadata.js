@@ -11,6 +11,12 @@ exports.up = function(knex) {
      * Relations
      */
      table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable();
+
+    /**
+     * Default data
+     */
+    table.timestamp('created_at')
+    table.timestamp('updated_at')
   })
 };
 
