@@ -2,6 +2,7 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: TxModel } = require('./../models/TransactionsModel');
 const { logger } = require('./../utils');
+const { recoverTx } = require('./../helpers/signer')
 
 // helpers
 const _ = require('lodash');
@@ -19,11 +20,11 @@ class TxController extends Controller {
         try {
           let transaction = transactions[index];
           let transaction_id = _.get(transaction, 'id', '');
-          let signer = await this.getSigner(transaction);
+          let caller = await recoverTx(transaction);
           let query = this.singleQuery();
           let data = {
             transaction_id: transaction_id,
-            caller: signer,
+            caller: caller,
             block_num: block_num,
             operation: '',
             contract_id: ''

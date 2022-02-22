@@ -2,7 +2,6 @@ const { customAlphabet } = require('nanoid')
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 26)
 
 // helpers
-const signer = require('./../helpers/signer');
 const dot = require('dot-object');
 
 class Controller {
@@ -23,9 +22,6 @@ class Controller {
   // utils
   getId() {
     return `${this.prefix}_${nanoid()}`
-  }
-  getSigner(data) {
-    return signer.recover(data);
   }
   metadata(data) {
     let dot_data = dot.dot(data);

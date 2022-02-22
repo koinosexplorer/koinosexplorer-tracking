@@ -1,13 +1,21 @@
-const koilib = require("koilib");
-const bs58 = require("bs58")
+const { Serializer, utils, Signer } = require("koilib");
 
-const recover = async (data) => {
-  const hex_data = await koilib.Signer.recoverPublicKey(data);
-  const bytes = Buffer.from(hex_data, 'hex')
-  const pk = bs58.encode(bytes)
-  return pk
+// Serialize data
+const activeBlockDataSerializer = new Serializer(utils.ProtocolTypes, { defaultTypeName: 'active_block_data' })
+
+/**
+ * Functions
+ */
+const recoverBlock = async (active) => {
+  let activeSigner = await activeBlockDataSerializer.deserialize(active)
+  return utils.encodeBase58(utils.decodeBase64(activeSigner.signer));
+}
+
+const recoverTx = async (tx) => {
+  return await Signer.recoverAddress(tx)
 }
 
 module.exports = {
-  recover
+  recoverBlock,
+  recoverTx
 }

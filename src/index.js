@@ -6,6 +6,7 @@ const GlobalController = require('./controllers/globals');
 const BlocksController = require('./controllers/blocks');
 const ContractsController = require('./controllers/contracts');
 const TxController = require('./controllers/transactions');
+const TokensController = require('./controllers/tokens');
 
 // RPC
 const { chain } = require('./services/chain');
@@ -16,10 +17,21 @@ const { logger, timeout } = require('./utils');
 
 let global = new GlobalController();
 
+// Controllers
+const CONTROLLERS_FILES = [
+  { name: 'blocks', controller: BlocksController },
+  { name: 'transactions', controller: TxController },
+  { name: 'contracts', controller: ContractsController },
+  { name: 'tokens', controller: TokensController },
+]
+
+
 class Tracking {
   constructor() {
     this.head_chain = null;
     this.head_db = null;
+
+    this.block_head
   }
 
   async load_chain() {
@@ -74,20 +86,20 @@ class Tracking {
 
     let result = _.get(result_block, 'block_items[0]', null);
     if(result) {
+      
       // controllers
-      let controllers_enabled = process.env.CONTROLLER_ENABLED.split(',');
-      if(controllers_enabled.indexOf('blocks') != -1) {
-        let blocks = new BlocksController();
-        await blocks.process_block(result);
+      let controllersEnabled = process.env.CONTROLLER_ENABLED.split(',');
+      console.log(controllersEnabled)
+      for (let index = 0; index < controllersEnabled.length; index++) {
+        let controllerName = controllersEnabled[index];
+        let ctrl = CONTROLLERS_FILES.find(ctrl => ctrl.name == controllerName);
+        let ControllerFinal = _.get(ctrl, 'controller', undefined);
+        if(ControllerFinal) {
+          let controller = new ControllerFinal();
+          await controller.process_block(result);
+        }
       }
-      if(controllers_enabled.indexOf('contracts') != -1) {
-        let contracts = new ContractsController();
-        await contracts.process_block(result);
-      }
-      if(controllers_enabled.indexOf('transactions') != -1) {
-        let tx = new TxController();
-        await tx.process_block(result);
-      }
+
       // update db
       await global.setHead(block_num)
     }
