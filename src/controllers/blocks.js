@@ -11,7 +11,7 @@ class BlockController extends Controller {
   constructor() {
     super({ model: BlocksModel, knex: KnexPool, prefix: 'block' })
   }
-  async process_block(data) {
+  async processBlock(data) {
     try {
       let block = _.omit(_.get(data, 'block'), [ "transactions" ]);
       let query = this.singleQuery();

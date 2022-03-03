@@ -17,7 +17,7 @@
     "dotenv": "^10.0.0",
     "google-protobuf": "^3.19.4",
     "knex": "^0.95.6",
-    "koilib": "^2.7.0",
+    "koilib": "^2.8.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.1",
     "nanoid": "^3.2.0",

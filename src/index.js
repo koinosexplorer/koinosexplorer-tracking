@@ -9,8 +9,7 @@ const TxController = require('./controllers/transactions');
 const TokensController = require('./controllers/tokens');
 
 // RPC
-const { chain } = require('./services/chain');
-const { block_store } = require('./services/block_store');
+const { provider, txSerializer, blockSerializer } = require('./helpers/koilib')
 
 // UTILS
 const { logger, timeout } = require('./utils');
@@ -24,92 +23,118 @@ const CONTROLLERS_FILES = [
   { name: 'contracts', controller: ContractsController },
   { name: 'tokens', controller: TokensController },
 ]
-
+const MAX_NB_BLOCKS_TO_FETCH = 10;
 
 class Tracking {
   constructor() {
-    this.head_chain = null;
-    this.head_db = null;
+    this.headChain = null;
+    this.headDB = null;
 
-    this.block_head
+    // data
+    this.lastBlock = null;
+    this.curBlockNum = null;
   }
 
-  async load_chain() {
-    this.head_chain = await chain.get_head();
-    await timeout(10 * 1000);
-    this.load_chain();
+  async loadChain() {
+    this.headChain = await provider.getHeadInfo();
+    this.curBlockNum = Number(_.get(this.headChain, 'head_topology.height', '0'));
+    await timeout(30 * 1000);
+    this.loadChain();
   }
   
-  async load_db() {
+  async loadDB() {
     let query_result = await global.getHead();
     let result = {}
     query_result.map(obj => result[obj.name] = obj.value)
     dot.object(result);
-    this.head_db = result;
+    this.headDB = result;
+    this.lastBlock = 11// Number(_.get(this.headDB, 'head_block', '0'));
   }
 
-  async sync_db() {
-    // auto dispatch until it load the head info of chain rpc
-    if(this.head_chain == null || this.head_db == null) {
+  async syncDB() {
+    if(this.headChain == null || this.headDB == null) {
       await timeout(1000);
-      return this.sync_db();
+      return this.syncDB();
     }
-    this.gen_next_block();
+    // pre blocks
+    this.genNextBlock();
   }
 
-  async gen_next_block() {
-    let cur_block_num = Number(_.get(this.head_chain, 'head_topology.height', '0'))
-    let last_block = Number(_.get(this.head_db, 'head_block', '0'))
-    
+  async genNextBlock() {
+
     // We are 20+ blocks behind!
-    if(cur_block_num >= last_block + 20) {
-      logger('Streaming is ' + (cur_block_num - last_block) + ' blocks behind!', 1, 'Red');
+    if(this.curBlockNum >= this.lastBlock + 20) {
+      logger('streaming is ' + (this.curBlockNum - this.lastBlock) + ' blocks behind!', 1, 'Red');
     }
 
-    while(cur_block_num > last_block) {
-      await this.process_block(last_block + 1, cur_block_num);
-      last_block += 1;
+    while(this.curBlockNum > this.lastBlock) {
+      await this.processBlock(this.lastBlock + 1, this.curBlockNum);
     }
     // Attempt to load the next block after a 1 second delay (or faster if we're behind and need to catch up)
-		setTimeout(() => this.gen_next_block(), 1000);
+    await timeout(1000);
+    this.genNextBlock()
   }
 
-  async process_block(block_num, cur_block_num) {
-    logger(`Processing block [${block_num}], Head Block: ${cur_block_num}, Blocks to head: ${cur_block_num - block_num}`, block_num % 1000 == 0 ? 1 : 4);
-    let head_block_id = _.get(this.head_chain, 'head_topology.id', '');
-    let result_block
+  async processBlock(blockNum, curBlockNum) {
+    let blocksToFetch = Math.min(curBlockNum - blockNum, MAX_NB_BLOCKS_TO_FETCH);
+    let resultBlocks
     try {
-      result_block = await block_store.get_blocks_by_height(head_block_id, block_num, 1);
+      resultBlocks = await provider.getBlocks(blockNum, blocksToFetch > 0 ? blocksToFetch : 1 )
     } catch (error) {
       console.log(error)
+      await timeout(1000);
+      return this.processBlock(blockNum, curBlockNum)
     }
+    if(!resultBlocks) return;
 
-    let result = _.get(result_block, 'block_items[0]', null);
-    if(result) {
-      
-      // controllers
-      let controllersEnabled = process.env.CONTROLLER_ENABLED.split(',');
-      console.log(controllersEnabled)
+    let initBlock = _.head(resultBlocks);
+    let lastBlock = _.last(resultBlocks);
+    logger(`Processing block [ ${resultBlocks.length>1 ? initBlock.block_height+" -> "+ lastBlock.block_height : initBlock.block_height } ], Head Block: ${curBlockNum}`);
+
+    for (let index = 0; index < resultBlocks.length; index++) {
+
+      let block = resultBlocks[index];
+
+      // deserialize data;
+      if(block.block.active) {
+        block.block.active = await blockSerializer.deserialize(block.block.active)
+      }
+      if(block.block.transactions) {
+        let txFinal = []
+        for (let index = 0; index < block.block.transactions.length; index++) {
+          let txInblock = block.block.transactions[index];
+          txInblock.active = await txSerializer.deserialize(txInblock.active);
+          txFinal.push(txInblock);
+        }
+        block.block.transactions = txFinal;
+      }
+
+      const controllersEnabled = process.env.CONTROLLER_ENABLED.split(',');
       for (let index = 0; index < controllersEnabled.length; index++) {
         let controllerName = controllersEnabled[index];
         let ctrl = CONTROLLERS_FILES.find(ctrl => ctrl.name == controllerName);
         let ControllerFinal = _.get(ctrl, 'controller', undefined);
         if(ControllerFinal) {
           let controller = new ControllerFinal();
-          await controller.process_block(result);
+          await controller.processBlock(block);
         }
       }
 
-      // update db
-      await global.setHead(block_num)
     }
+    // save new block
+    await this.saveLastBlock( Number(lastBlock.block_height) );
+  }
+
+  async saveLastBlock(lastBlockNum) {
+    await global.setHead(lastBlockNum)
+    this.lastBlock = lastBlockNum;
   }
   
   async run() {
     logger('staring', 'Green')
-    await this.load_chain();
-    await this.load_db();
-    await this.sync_db();
+    await this.loadChain();
+    await this.loadDB();
+    await this.syncDB();
   }
 }
 

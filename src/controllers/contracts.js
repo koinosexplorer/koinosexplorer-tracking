@@ -9,7 +9,7 @@ class ContractsController extends Controller {
   constructor() {
     super({ model: ContractsModel, knex: KnexPool, prefix: 'contracts' })
   }
-  async process_block(block) {
+  async processBlock(block) {
     const transactions = _.get(block, 'block.transactions', []);
     if(transactions.length) {
       for (let index = 0; index < transactions.length; index++) {

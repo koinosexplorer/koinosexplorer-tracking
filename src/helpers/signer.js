@@ -7,8 +7,7 @@ const activeBlockDataSerializer = new Serializer(utils.ProtocolTypes, { defaultT
  * Functions
  */
 const recoverBlock = async (active) => {
-  let activeSigner = await activeBlockDataSerializer.deserialize(active)
-  return utils.encodeBase58(utils.decodeBase64(activeSigner.signer));
+  return utils.encodeBase58(utils.decodeBase64(active.signer));
 }
 
 const recoverTx = async (tx) => {
