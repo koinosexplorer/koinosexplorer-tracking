@@ -9,7 +9,7 @@ const TxController = require('./controllers/transactions');
 const TokensController = require('./controllers/tokens');
 
 // RPC
-const { provider, txSerializer, blockSerializer } = require('./helpers/koilib')
+const { provider } = require('./helpers/koilib')
 
 // UTILS
 const { logger, timeout } = require('./utils');
@@ -92,23 +92,8 @@ class Tracking {
     logger(`Processing block [ ${resultBlocks.length>1 ? initBlock.block_height+" -> "+ lastBlock.block_height : initBlock.block_height } ], Head Block: ${curBlockNum}`);
 
     for (let index = 0; index < resultBlocks.length; index++) {
-
+      
       let block = resultBlocks[index];
-
-      // deserialize data;
-      if(block.block.active) {
-        block.block.active = await blockSerializer.deserialize(block.block.active)
-      }
-      if(block.block.transactions) {
-        let txFinal = []
-        for (let index = 0; index < block.block.transactions.length; index++) {
-          let txInblock = block.block.transactions[index];
-          txInblock.active = await txSerializer.deserialize(txInblock.active);
-          txFinal.push(txInblock);
-        }
-        block.block.transactions = txFinal;
-      }
-
       const controllersEnabled = process.env.CONTROLLER_ENABLED.split(',');
       for (let index = 0; index < controllersEnabled.length; index++) {
         let controllerName = controllersEnabled[index];
