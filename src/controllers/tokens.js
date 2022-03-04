@@ -1,10 +1,9 @@
 const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: TokensModel } = require('./../models/TokensModel');
-
-// koilib config
-const { Contract, utils } = require('koilib');
-const { provider, signer } = require('./../helpers/koilib');
+const { logger } = require('./../utils');
+const { txSerializer, provider, signer } = require('./../helpers/koilib');
+const { utils: UtilsKoilib, Contract } = require('koilib');
 
 // helpers
 const _ = require('lodash');
@@ -13,12 +12,89 @@ class TokensController extends Controller {
   constructor() {
     super({ model: TokensModel, knex: KnexPool, prefix: 'tokens' })
   }
-  async processBlock(block) {
-    const transactions = _.get(block, 'block.transactions', []);
+  async processBlock(data) {
+    const block = _.get(data, 'block', {});
+    const block_num = _.get(block, 'header.height', '0');
+    const transactions = _.get(block, 'transactions', []);
+
     if(transactions.length) {
       for (let index = 0; index < transactions.length; index++) {
+        try {
+          let transaction = transactions[index];
+          let transaction_id = _.get(transaction, 'id', '');
+
+          // decerializer active transaction
+          transaction.active = await txSerializer.deserialize(transaction.active);
+
+          // check operations
+          if(transaction.active.operations) {
+            let operations = transaction.active.operations;
+            for (let index = 0; index < operations.length; index++) {
+              let operation = operations[index];
+              let operation_type = _.head(Object.keys(operation));
+              let contractId = ''
+              if(_.get(operation, `${operation_type}.contract_id`, false)) {
+                contractId = UtilsKoilib.encodeBase58(operation[operation_type].contract_id);
+              }
+              // check operations tokens
+              if(operation_type == 'upload_contract' && contractId) {
+                try {
+                  const Krc20Contract = new Contract({ id: contractId, abi: UtilsKoilib.Krc20Abi, provider, signer })
+                  const { result: { value: name } } = await Krc20Contract.functions.name()
+                  const { result: { value: symbol } } = await Krc20Contract.functions.symbol()
+                  const { result: { value: decimals } } = await Krc20Contract.functions.decimals()
+                  const { result: { value: totalSupply } } = await Krc20Contract.functions.totalSupply()
+                  const { result: { value: balance } } = await Krc20Contract.functions.balanceOf(contractId)
+                  if(name && symbol && decimals && totalSupply && balance) {
+                    let tokenFinal = {
+                      token_id: contractId,
+                      name: name,
+                      symbol: symbol,
+                      decimals: decimals,
+                      // relations
+                      block_num: block_num,
+                      transaction_id: transaction_id,
+                      contract_id: contractId
+                    }
+                    let query = this.singleQuery();          
+                    await query.insert(tokenFinal);
+                  }
+                } catch (error) {
+                  logger(error.message, 'Red');
+                  // not Krc20 compliant or already exists
+                }
+              }
+              if(operation_type == 'call_contract' && contractId) {
+                try {
+                  const Krc20Contract = new Contract({
+                    id: contractId,
+                    abi: UtilsKoilib.Krc20Abi
+                  })
+                  const decodedKRC20Operation = await Krc20Contract.decodeOperation(operation)
+                  console.log(decodedKRC20Operation)
+                  let tokenTransfer = {
+                    operation: decodedKRC20Operation.name,
+                    from: decodedKRC20Operation.args.from,
+                    to: decodedKRC20Operation.args.to,
+                    value: decodedKRC20Operation.args.value,
+                    // relations
+                    transaction_id: transaction_id
+                  }
+                  // save transfer
+                  let queryRelationMetaData = this.relationalQuery("tokens_transactions");
+                  await queryRelationMetaData.for(contractId).insert(tokenTransfer);
+                } catch (error) {
+                  logger(error.message, 'Red');
+                }
+              }
+            }
+          }
+        } catch (error) {
+          logger(error.message, 'Red');
+        }
       }
     }
+
   }
 
   // utils

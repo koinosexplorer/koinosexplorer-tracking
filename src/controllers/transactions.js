@@ -13,12 +13,9 @@ class TxController extends Controller {
     super({ model: TxModel, knex: KnexPool, prefix: 'transactions' })
   }
   async processBlock(data) {
-    // decerilicer
     const block = _.get(data, 'block', {});
-
     const block_num = _.get(block, 'header.height', '0');
     const transactions = _.get(block, 'transactions', []);
-
 
     if(transactions.length) {
       for (let index = 0; index < transactions.length; index++) {
