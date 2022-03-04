@@ -23,7 +23,6 @@ class TxController extends Controller {
           let transaction = transactions[index];
           let transaction_id = _.get(transaction, 'id', '');
           let caller = await txSigner(transaction);
-          console.log("caller block:", caller)
           let data = {
             transaction_id: transaction_id,
             caller: caller,
@@ -73,7 +72,10 @@ class TxController extends Controller {
           let queryRelationMetaData = this.relationalQuery("transactions_metadata");
           await queryRelationMetaData.for(transaction_id).insert(metadata);
         } catch (error) {
+          logger('controller tx', 'Blue')
           logger(error.message, 'Red');
+          console.log(data);
+          process.exit();
         }
       }
     }

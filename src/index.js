@@ -9,7 +9,7 @@ const TxController = require('./controllers/transactions');
 const TokensController = require('./controllers/tokens');
 
 // RPC
-const { provider } = require('./helpers/koilib')
+const { provider } = require('./helpers/koilib');
 
 // UTILS
 const { logger, timeout } = require('./utils');

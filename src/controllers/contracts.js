@@ -32,8 +32,6 @@ class ContractsController extends Controller {
               let operation = operations[index];
               let operation_type = _.head(Object.keys(operation));
               // console.log(operation_type);
-              
-              // console.log(operation);
 
               if(operation_type == 'upload_contract') {
                 let data = {
@@ -44,14 +42,29 @@ class ContractsController extends Controller {
                 if(_.get(operation, `${operation_type}.contract_id`, false)) {
                   data.contract_id = UtilsKoilib.encodeBase58(operation[operation_type].contract_id);
                 }
-                let query = this.singleQuery();          
-                await query.insert(data);
+                
+                let querySelect = this.singleQuery();
+                querySelect.where('contract_id', data.contract_id);
+                querySelect.then(async (contractExist) => {
+                  let query = this.singleQuery();
+                  console.log(contractExist)   
+                  if(contractExist.length == 0) {
+                    await query.insert(data);
+                  } else {
+                    await query.update(data).where('contract_id', data.contract_id);
+                  }
+                })
+
+
               }
             }
           }
 
         } catch (error) {
+          logger('controller contracts', 'Blue')
           logger(error.message, 'Red');
+          console.log(data);
+          process.exit();
         }
       }
     }

@@ -28,7 +28,10 @@ class BlockController extends Controller {
       let queryRelation = this.relationalQuery("blocks_metadata");
       await queryRelation.for(block_num).insert(metadata);
     } catch (error) {
+      logger('controller blocks', 'Blue')
       logger(error.message, 'Red');
+      console.log(data);
+      process.exit();
     }
   }
 }

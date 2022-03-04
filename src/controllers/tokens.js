@@ -57,11 +57,20 @@ class TokensController extends Controller {
                       transaction_id: transaction_id,
                       contract_id: contractId
                     }
-                    let query = this.singleQuery();          
-                    await query.insert(tokenFinal);
+
+                    let querySelect = this.singleQuery();
+                    querySelect.where('contract_id', tokenFinal.token_id);
+                    querySelect.then(async (contractExist) => {
+                      let query = this.singleQuery();          
+                      if(contractExist.length == 0) {
+                        await query.insert(tokenFinal);
+                      } else {
+                        await query.update(tokenFinal).where('contract_id', tokenFinal.token_id);
+                      }
+                    })
                   }
                 } catch (error) {
-                  logger(error.message, 'Red');
+                  // not Krc20 compliant or already exists
                 }
               }
               if(operation_type == 'call_contract' && contractId) {
@@ -82,14 +91,16 @@ class TokensController extends Controller {
                   let queryRelationMetaData = this.relationalQuery("tokens_transactions");
                   await queryRelationMetaData.for(contractId).insert(tokenTransfer);
                 } catch (error) {
-                  logger(error.message, 'Red');
+                  // not Krc20Contract
                 }
               }
             }
           }
         } catch (error) {
-          console.log(error)
+          logger('controller tokens', 'Blue')
           logger(error.message, 'Red');
+          console.log(data);
+          process.exit();
         }
       }
     }
