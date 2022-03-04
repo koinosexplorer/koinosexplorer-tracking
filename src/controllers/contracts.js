@@ -2,7 +2,7 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: ContractsModel } = require('./../models/ContractsModel');
 const { logger } = require('./../utils');
-const { txSerializer } = require('./../helpers/koilib');
+const { txSerializer, txSigner } = require('./../helpers/koilib');
 const { utils: UtilsKoilib } = require('koilib');
 
 // helpers
@@ -21,13 +21,7 @@ class ContractsController extends Controller {
         try {
           let transaction = transactions[index];
           let transaction_id = _.get(transaction, 'id', '');
-          let caller = await this.getSigner(transaction);
-          let data = {
-            contract_id: "",
-            address_upload: caller,
-            transactions_upload: transaction_id
-          }
-
+          let caller = await txSigner(transaction);
           // decerializer active transaction
           transaction.active = await txSerializer.deserialize(transaction.active);
 
@@ -37,17 +31,24 @@ class ContractsController extends Controller {
             for (let index = 0; index < operations.length; index++) {
               let operation = operations[index];
               let operation_type = _.head(Object.keys(operation));
+              // console.log(operation_type);
+              
+              // console.log(operation);
+
               if(operation_type == 'upload_contract') {
+                let data = {
+                  contract_id: "",
+                  address_upload: caller,
+                  transactions_upload: transaction_id
+                }
                 if(_.get(operation, `${operation_type}.contract_id`, false)) {
                   data.contract_id = UtilsKoilib.encodeBase58(operation[operation_type].contract_id);
                 }
+                let query = this.singleQuery();          
+                await query.insert(data);
               }
             }
           }
-
-          // save contract
-          let query = this.singleQuery();          
-          await query.insert(data);
 
         } catch (error) {
           logger(error.message, 'Red');

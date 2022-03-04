@@ -22,25 +22,6 @@ class Controller {
   }
 
   // utils
-  async getSigner(data) {
-    let sing = await signer.recoverAddress(data);
-    return sing;
-  }
-  async getDeSerializeData(block) {
-    if(block.active) {
-      block.active = await blockSerializer.deserialize(block.active)
-    }
-    if(block.transactions) {
-      let txFinal = []
-      for (let index = 0; index < block.transactions.length; index++) {
-        let txInblock = block.transactions[index];
-        txInblock.active = await txSerializer.deserialize(txInblock.active);
-        txFinal.push(txInblock);
-      }
-      block.transactions = txFinal;
-    }
-    return block;
-  }
   getId() {
     return `${this.prefix}_${nanoid()}`;
   }

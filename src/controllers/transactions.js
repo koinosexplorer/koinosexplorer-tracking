@@ -2,7 +2,7 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: TxModel } = require('./../models/TransactionsModel');
 const { logger } = require('./../utils');
-const { txSerializer } = require('./../helpers/koilib');
+const { txSerializer, txSigner } = require('./../helpers/koilib');
 const { utils: UtilsKoilib } = require('koilib');
 
 // helpers
@@ -22,7 +22,8 @@ class TxController extends Controller {
         try {
           let transaction = transactions[index];
           let transaction_id = _.get(transaction, 'id', '');
-          let caller = await this.getSigner(transaction);
+          let caller = await txSigner(transaction);
+          console.log("caller block:", caller)
           let data = {
             transaction_id: transaction_id,
             caller: caller,

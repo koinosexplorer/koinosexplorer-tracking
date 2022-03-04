@@ -33,7 +33,8 @@ class TokensController extends Controller {
               let operation = operations[index];
               let operation_type = _.head(Object.keys(operation));
               let contractId = ''
-              if(_.get(operation, `${operation_type}.contract_id`, false)) {
+              let operationsHaveContractId = ["upload_contract", "call_contract"]
+              if(_.get(operation, `${operation_type}.contract_id`, false) && operationsHaveContractId.indexOf(operation_type) != -1 ) {
                 contractId = UtilsKoilib.encodeBase58(operation[operation_type].contract_id);
               }
               // check operations tokens
@@ -48,9 +49,9 @@ class TokensController extends Controller {
                   if(name && symbol && decimals && totalSupply && balance) {
                     let tokenFinal = {
                       token_id: contractId,
-                      name: name,
-                      symbol: symbol,
-                      decimals: decimals,
+                      name: typeof name == 'string' ? name : name.toString(),
+                      symbol: typeof symbol == 'string' ? symbol : symbol.toString(),
+                      decimals: typeof decimals == 'string' ? decimals : decimals.toString(),
                       // relations
                       block_num: block_num,
                       transaction_id: transaction_id,
@@ -61,24 +62,21 @@ class TokensController extends Controller {
                   }
                 } catch (error) {
                   logger(error.message, 'Red');
-                  // not Krc20 compliant or already exists
                 }
               }
               if(operation_type == 'call_contract' && contractId) {
                 try {
-                  const Krc20Contract = new Contract({
-                    id: contractId,
-                    abi: UtilsKoilib.Krc20Abi
-                  })
+                  const Krc20Contract = new Contract({ id: contractId, abi: UtilsKoilib.Krc20Abi })
                   const decodedKRC20Operation = await Krc20Contract.decodeOperation(operation)
-                  console.log(decodedKRC20Operation)
+
                   let tokenTransfer = {
                     operation: decodedKRC20Operation.name,
                     from: decodedKRC20Operation.args.from,
                     to: decodedKRC20Operation.args.to,
                     value: decodedKRC20Operation.args.value,
                     // relations
-                    transaction_id: transaction_id
+                    transaction_id: transaction_id,
+                    token_id: contractId
                   }
                   // save transfer
                   let queryRelationMetaData = this.relationalQuery("tokens_transactions");
@@ -90,6 +88,7 @@ class TokensController extends Controller {
             }
           }
         } catch (error) {
+          console.log(error)
           logger(error.message, 'Red');
         }
       }

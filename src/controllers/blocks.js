@@ -2,7 +2,7 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: BlocksModel } = require('./../models/BlocksModel');
 const { logger } = require('./../utils');
-const { blockSerializer } = require('./../helpers/koilib');
+const { blockSerializer, blockSigner } = require('./../helpers/koilib');
 
 // helpers
 const _ = require('lodash');
@@ -14,11 +14,11 @@ class BlockController extends Controller {
   async processBlock(data) {
     try {
       let block = _.omit(_.get(data, 'block'), [ "transactions" ]);
-      let producer = await this.getSigner(block);
       
       // decerializer active block
       block.active = await blockSerializer.deserialize(block.active);
 
+      let producer = await blockSigner(block.active);
       let query = this.singleQuery();
       let block_num = _.get(block, 'header.height');
       await query.insert({ block_num: block_num, producer: producer });

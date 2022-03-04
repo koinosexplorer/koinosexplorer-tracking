@@ -101,7 +101,8 @@ class Tracking {
         let ControllerFinal = _.get(ctrl, 'controller', undefined);
         if(ControllerFinal) {
           let controller = new ControllerFinal();
-          await controller.processBlock(block);
+          // clone the block to avoid problems with the deserializer
+          await controller.processBlock(_.cloneDeep(block));
         }
       }
 
