@@ -48,7 +48,7 @@ class Tracking {
     query_result.map(obj => result[obj.name] = obj.value)
     dot.object(result);
     this.headDB = result;
-    this.lastBlock = 11// Number(_.get(this.headDB, 'head_block', '0'));
+    this.lastBlock = Number(_.get(this.headDB, 'head_block', '0'));
   }
 
   async syncDB() {

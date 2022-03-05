@@ -2,7 +2,7 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: TokensModel } = require('./../models/TokensModel');
 const { logger } = require('./../utils');
-const { txSerializer, provider, signer } = require('./../helpers/koilib');
+const { txSerializer, provider, signer, getTokenInformation } = require('./../helpers/koilib');
 const { utils: UtilsKoilib, Contract } = require('koilib');
 
 // helpers
@@ -40,13 +40,14 @@ class TokensController extends Controller {
               // check operations tokens
               if(operation_type == 'upload_contract' && contractId) {
                 try {
-                  const Krc20Contract = new Contract({ id: contractId, abi: UtilsKoilib.Krc20Abi, provider, signer })
-                  const { result: { value: name } } = await Krc20Contract.functions.name()
-                  const { result: { value: symbol } } = await Krc20Contract.functions.symbol()
-                  const { result: { value: decimals } } = await Krc20Contract.functions.decimals()
-                  const { result: { value: totalSupply } } = await Krc20Contract.functions.totalSupply()
-                  const { result: { value: balance } } = await Krc20Contract.functions.balanceOf(contractId)
-                  if(name && symbol && decimals && totalSupply && balance) {
+                  let tokenInfo = await getTokenInformation(contractId);
+                  let name = undefined, symbol = undefined, decimals = undefined;
+                  if(tokenInfo) {
+                    name = tokenInfo.name;
+                    symbol = tokenInfo.symbol;
+                    decimals = tokenInfo.decimals;
+                  }
+                  if(name && symbol && decimals) {
                     let tokenFinal = {
                       token_id: contractId,
                       name: typeof name == 'string' ? name : name.toString(),
@@ -57,7 +58,6 @@ class TokensController extends Controller {
                       transaction_id: transaction_id,
                       contract_id: contractId
                     }
-
                     let querySelect = this.singleQuery();
                     querySelect.where('contract_id', tokenFinal.token_id);
                     querySelect.then(async (contractExist) => {
@@ -67,9 +67,12 @@ class TokensController extends Controller {
                       } else {
                         await query.update(tokenFinal).where('contract_id', tokenFinal.token_id);
                       }
+                      return;
                     })
                   }
                 } catch (error) {
+                  console.log("token", 75)
+                  console.log("block", block.header.height)
                   // not Krc20 compliant or already exists
                 }
               }
@@ -91,6 +94,8 @@ class TokensController extends Controller {
                   let queryRelationMetaData = this.relationalQuery("tokens_transactions");
                   await queryRelationMetaData.for(contractId).insert(tokenTransfer);
                 } catch (error) {
+                  console.log("token", 99)
+                  console.log("block", block.header.height)
                   // not Krc20Contract
                 }
               }

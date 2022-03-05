@@ -43,23 +43,21 @@ class ContractsController extends Controller {
                   data.contract_id = UtilsKoilib.encodeBase58(operation[operation_type].contract_id);
                 }
                 
-                let querySelect = this.singleQuery();
-                querySelect.where('contract_id', data.contract_id);
+                let querySelect = this.singleQuery().where('contract_id', data.contract_id)
                 querySelect.then(async (contractExist) => {
                   let query = this.singleQuery();
-                  console.log(contractExist)   
                   if(contractExist.length == 0) {
                     await query.insert(data);
                   } else {
                     await query.update(data).where('contract_id', data.contract_id);
                   }
+                  return;
                 })
 
 
               }
             }
           }
-
         } catch (error) {
           logger('controller contracts', 'Blue')
           logger(error.message, 'Red');
