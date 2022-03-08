@@ -4,3 +4,6 @@
 [submodule "src/proto"]
 	path = src/proto
 	url = https://github.com/koinosexplorer/koinos-proto-commonjs
+[submodule "src/protos"]
+	path = src/protos
+	url = https://github.com/koinosexplorer/koinos-proto-commonjs
