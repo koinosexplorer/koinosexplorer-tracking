@@ -25,12 +25,12 @@ class Controller {
   getId() {
     return `${this.prefix}_${nanoid()}`;
   }
-  metadata(data) {
+  processData(data) {
     let dot_data = dot.dot(data);
     let process_data = (key) => ({
       id: this.getId(),
       name: key,
-      value: dot_data[key]
+      value: String(dot_data[key])
     })
     return Object.keys(dot_data).map(process_data);
   }

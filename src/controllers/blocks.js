@@ -14,19 +14,23 @@ class BlockController extends Controller {
   async processBlock(data) {
     try {
       let block = _.omit(_.get(data, 'block'), [ "transactions" ]);
+      let receipts = _.get(data, 'receipt', {});
+      let producer = _.get(block, 'header.signer', '');
       
-      // decerializer active block
-      block.active = await blockSerializer.deserialize(block.active);
-
-      let producer = await blockSigner(block.active);
       let query = this.singleQuery();
       let block_num = _.get(block, 'header.height');
       await query.insert({ block_num: block_num, producer: producer });
       
       // save metadata
-      let metadata = this.metadata(block);
-      let queryRelation = this.relationalQuery("blocks_metadata");
-      await queryRelation.for(block_num).insert(metadata);
+      let metadata = this.processData(block);
+      let queryRelationMetaData = this.relationalQuery("blocks_metadata");
+      await queryRelationMetaData.for(block_num).insert(metadata);
+
+      // save receipt
+      let receipt = this.processData(receipts);
+      let queryRelationReceipts = this.relationalQuery("blocks_receipts");
+      await queryRelationReceipts.for(block_num).insert(receipt);
+
     } catch (error) {
       logger('controller blocks', 'Blue')
       logger(error.message, 'Red');

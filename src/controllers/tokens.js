@@ -23,23 +23,18 @@ class TokensController extends Controller {
           let transaction = transactions[index];
           let transaction_id = _.get(transaction, 'id', '');
 
-          // decerializer active transaction
-          transaction.active = await txSerializer.deserialize(transaction.active);
-
           // check operations
-          if(transaction.active.operations) {
-            let operations = transaction.active.operations;
+          if(transaction.operations) {
+            let operations = transaction.operations;
             for (let index = 0; index < operations.length; index++) {
               let operation = operations[index];
-              let operation_type = _.head(Object.keys(operation));
-              let contractId = ''
-              let operationsHaveContractId = ["upload_contract", "call_contract"]
-              if(_.get(operation, `${operation_type}.contract_id`, false) && operationsHaveContractId.indexOf(operation_type) != -1 ) {
-                contractId = UtilsKoilib.encodeBase58(operation[operation_type].contract_id);
-              }
-              // check operations tokens
-              if(operation_type == 'upload_contract' && contractId) {
+              let operationtype = _.head(Object.keys(operation));
+              let contractId = _.get(operation, `${operationtype}.contract_id`, '');
+
+              if(operationtype == 'upload_contract') {
+                // OPERATION UPLOAD CONTRACT
                 try {
+
                   let tokenInfo = await getTokenInformation(contractId);
                   let name = undefined, symbol = undefined, decimals = undefined;
                   if(tokenInfo) {
@@ -70,17 +65,16 @@ class TokensController extends Controller {
                       return;
                     })
                   }
-                } catch (error) {
-                  console.log("token", 75)
-                  console.log("block", block.header.height)
-                  // not Krc20 compliant or already exists
-                }
+
+                } catch (error) { /* CONTRACT NOT KRC20 */ }
+
               }
-              if(operation_type == 'call_contract' && contractId) {
+              if(operationtype == 'call_contract' ) {
+
+                // OPERATION UPLOAD CONTRACT                
                 try {
                   const Krc20Contract = new Contract({ id: contractId, abi: UtilsKoilib.Krc20Abi })
                   const decodedKRC20Operation = await Krc20Contract.decodeOperation(operation)
-
                   let tokenTransfer = {
                     operation: decodedKRC20Operation.name,
                     from: decodedKRC20Operation.args.from,
@@ -93,14 +87,14 @@ class TokensController extends Controller {
                   // save transfer
                   let queryRelationMetaData = this.relationalQuery("tokens_transactions");
                   await queryRelationMetaData.for(contractId).insert(tokenTransfer);
-                } catch (error) {
-                  console.log("token", 99)
-                  console.log("block", block.header.height)
-                  // not Krc20Contract
-                }
+                } catch (error) { /* CONTRACT NOT IS A TOKEN */ }
+
               }
+
             }
           }
+          
+
         } catch (error) {
           logger('controller tokens', 'Blue')
           logger(error.message, 'Red');

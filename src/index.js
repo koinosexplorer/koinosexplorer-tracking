@@ -9,7 +9,8 @@ const TxController = require('./controllers/transactions');
 const TokensController = require('./controllers/tokens');
 
 // RPC
-const { provider } = require('./helpers/koilib');
+const { chain: chainrpc } = require('./services/chain');
+const { block: blockrpc } = require('./services/blockStore');
 
 // UTILS
 const { logger, timeout } = require('./utils');
@@ -36,7 +37,7 @@ class Tracking {
   }
 
   async loadChain() {
-    this.headChain = await provider.getHeadInfo();
+    this.headChain = await chainrpc.getHead();
     this.curBlockNum = Number(_.get(this.headChain, 'head_topology.height', '0'));
     await timeout(30 * 1000);
     this.loadChain();
@@ -79,7 +80,12 @@ class Tracking {
     let blocksToFetch = Math.min(curBlockNum - blockNum, MAX_NB_BLOCKS_TO_FETCH);
     let resultBlocks
     try {
-      resultBlocks = await provider.getBlocks(blockNum, blocksToFetch > 0 ? blocksToFetch : 1 )
+      let _resultBlocks = await blockrpc.getBlocks(
+        _.get(this.headChain, 'head_topology.id', ''),
+        blockNum,
+        blocksToFetch > 0 ? blocksToFetch : 1
+      )
+      resultBlocks = _.get(_resultBlocks, 'block_items', [])
     } catch (error) {
       console.log(error)
       await timeout(1000);
@@ -91,6 +97,7 @@ class Tracking {
     let lastBlock = _.last(resultBlocks);
     logger(`Processing block [ ${resultBlocks.length>1 ? initBlock.block_height+" -> "+ lastBlock.block_height : initBlock.block_height } ], Head Block: ${curBlockNum}`);
 
+    console.log(resultBlocks.map(b => b.block_height))
     for (let index = 0; index < resultBlocks.length; index++) {
       
       let block = resultBlocks[index];
