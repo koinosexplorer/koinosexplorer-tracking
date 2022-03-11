@@ -18,7 +18,7 @@ class BlockController extends Controller {
       let producer = _.get(block, 'header.signer', '');
       
       let query = this.singleQuery();
-      let block_num = _.get(block, 'header.height');
+      let block_num = Number(_.get(block, 'header.height'));
       await query.insert({ block_num: block_num, producer: producer });
       
       // save metadata

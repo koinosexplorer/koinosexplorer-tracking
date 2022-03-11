@@ -11,7 +11,7 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-    table.string('block_num').references('block_num').inTable('blocks').notNullable();
+    table.integer('block_num').references('block_num').inTable('blocks').notNullable();
     table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable();
     table.string('contract_id').references('contract_id').inTable('contracts').notNullable();
     

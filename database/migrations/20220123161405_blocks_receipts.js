@@ -10,7 +10,7 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-     table.string('block_num').references('block_num').inTable('blocks').notNullable();
+     table.integer('block_num').references('block_num').inTable('blocks').notNullable();
 
 
     /**

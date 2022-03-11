@@ -14,7 +14,7 @@ class TokensController extends Controller {
   }
   async processBlock(data) {
     const block = _.get(data, 'block', {});
-    const block_num = _.get(block, 'header.height', '0');
+    const block_num = Number(_.get(block, 'header.height'));
     const transactions = _.get(block, 'transactions', []);
 
     if(transactions.length) {

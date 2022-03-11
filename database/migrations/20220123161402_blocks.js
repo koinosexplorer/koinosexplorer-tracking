@@ -3,7 +3,7 @@ exports.up = function(knex) {
     /**
      * Data
      */
-    table.string('block_num').primary()
+    table.integer('block_num').primary()
     table.string('producer').nullable()
 
     /**

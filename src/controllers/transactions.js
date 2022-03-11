@@ -17,7 +17,7 @@ class TxController extends Controller {
     const _receipts = _.get(data, 'receipt', {});
 
 
-    const block_num = _.get(_block, 'header.height', '0');
+    const block_num =  Number(_.get(_block, 'header.height', '0'));
     const transactions = _.get(_block, 'transactions', []);
     const receipts = _.get(_receipts, 'transaction_receipts', []);
 
