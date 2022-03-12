@@ -97,7 +97,6 @@ class Tracking {
     let lastBlock = _.last(resultBlocks);
     logger(`Processing block [ ${resultBlocks.length>1 ? initBlock.block_height+" -> "+ lastBlock.block_height : initBlock.block_height } ], Head Block: ${curBlockNum}`);
 
-    console.log(resultBlocks.map(b => b.block_height))
     for (let index = 0; index < resultBlocks.length; index++) {
       
       let block = resultBlocks[index];
