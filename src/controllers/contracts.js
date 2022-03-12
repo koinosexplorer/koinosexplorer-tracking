@@ -37,7 +37,6 @@ class ContractsController extends Controller {
                   address_upload: caller,
                   transactions_upload: transaction_id
                 }
-                
                 let querySelect = this.singleQuery().where('contract_id', contract_id)
                 querySelect.then(async (contractExist) => {
                   let query = this.singleQuery();
@@ -48,8 +47,11 @@ class ContractsController extends Controller {
                   }
                   return;
                 })
-
               }
+              if(operation_type == 'call_contract') {
+                
+              }
+
             }
           }
         } catch (error) {
