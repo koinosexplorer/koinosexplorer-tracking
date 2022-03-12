@@ -2,6 +2,7 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: BlocksModel } = require('./../models/BlocksModel');
 const { logger } = require('./../utils');
+const fs = require('fs');
 const { blockSerializer, blockSigner } = require('./../helpers/koilib');
 
 // helpers
@@ -14,27 +15,35 @@ class BlockController extends Controller {
   async processBlock(data) {
     try {
       let block = _.omit(_.get(data, 'block'), [ "transactions" ]);
-      let receipts = _.get(data, 'receipt', {});
+      let receipts = _.omit(_.get(data, 'receipt', {}), [ "transaction_receipts" ]);
       let producer = _.get(block, 'header.signer', '');
       
       let query = this.singleQuery();
       let block_num = Number(_.get(block, 'header.height'));
       await query.insert({ block_num: block_num, producer: producer });
       
-      // save metadata
-      let metadata = this.processData(block);
-      let queryRelationMetaData = this.relationalQuery("blocks_metadata");
-      await queryRelationMetaData.for(block_num).insert(metadata);
+      // // save metadata
+      let _metadata = this.processData(block);
+      for (let index = 0; index < _metadata.length; index++) {
+        let metadata = _metadata[index];
+        let queryRelationMetaData = this.relationalQuery("blocks_metadata");
+        await queryRelationMetaData.for(block_num).insert(metadata);
+      }
 
-      // save receipt
-      let receipt = this.processData(receipts);
-      let queryRelationReceipts = this.relationalQuery("blocks_receipts");
-      await queryRelationReceipts.for(block_num).insert(receipt);
+
+      // // save receipt
+      let _receipts = this.processData(receipts);
+      for (let index = 0; index < _receipts.length; index++) {
+        let receipt = _receipts[index];
+        let queryRelationReceipts = this.relationalQuery("blocks_receipts");
+        await queryRelationReceipts.for(block_num).insert(receipt);
+      }
 
     } catch (error) {
       logger('controller blocks', 'Blue')
       logger(error.message, 'Red');
       console.log(data);
+      fs.writeFileSync('./eror.txt', error.message);
       process.exit();
     }
   }

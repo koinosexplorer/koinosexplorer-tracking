@@ -111,11 +111,11 @@ class Tracking {
           // clone the block to avoid problems with the deserializer
           await controller.processBlock(_.cloneDeep(block));
         }
+        // save new block
+        await this.saveLastBlock( Number(block.block_height) );
       }
 
     }
-    // save new block
-    await this.saveLastBlock( Number(lastBlock.block_height) );
   }
 
   async saveLastBlock(lastBlockNum) {

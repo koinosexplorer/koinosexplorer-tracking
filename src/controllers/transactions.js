@@ -42,14 +42,21 @@ class TxController extends Controller {
           await query.insert(data);
   
           // save metadata
-          let metadata = this.processData(transaction);
-          let queryRelationMetaData = this.relationalQuery("transactions_metadata");
-          await queryRelationMetaData.for(transaction_id).insert(metadata);
+          let _metadata = this.processData(transaction);
+          for (let index = 0; index < _metadata.length; index++) {
+            let metadata = _metadata[index];
+            let queryRelationMetaData = this.relationalQuery("transactions_metadata");
+            await queryRelationMetaData.for(transaction_id).insert(metadata);
+          }
 
           // save receipt
-          let receiptData = this.processData(receipt);
-          let queryRelationReceipts = this.relationalQuery("transactions_receipts");
-          await queryRelationReceipts.for(transaction_id).insert(receiptData);
+          let _receiptData = this.processData(receipt);
+          for (let index = 0; index < _receiptData.length; index++) {
+            let receiptData = _receiptData[index];
+            let queryRelationReceipts = this.relationalQuery("transactions_receipts");
+            await queryRelationReceipts.for(transaction_id).insert(receiptData);
+          }
+
 
           
         } catch (error) {
