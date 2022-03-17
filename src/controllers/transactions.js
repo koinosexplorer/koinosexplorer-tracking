@@ -2,8 +2,6 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: TxModel } = require('./../models/TransactionsModel');
 const { logger } = require('./../utils');
-const { txSerializer, txSigner } = require('./../helpers/koilib');
-const { utils: UtilsKoilib } = require('koilib');
 
 // helpers
 const _ = require('lodash');

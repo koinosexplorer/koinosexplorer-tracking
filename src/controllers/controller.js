@@ -1,4 +1,3 @@
-const { signer, txSerializer, blockSerializer } = require('./../helpers/koilib');
 const { customAlphabet } = require('nanoid');
 
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 26);

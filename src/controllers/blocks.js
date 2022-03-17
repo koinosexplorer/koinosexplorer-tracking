@@ -2,8 +2,6 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: BlocksModel } = require('./../models/BlocksModel');
 const { logger } = require('./../utils');
-const fs = require('fs');
-const { blockSerializer, blockSigner } = require('./../helpers/koilib');
 
 // helpers
 const _ = require('lodash');
@@ -43,7 +41,6 @@ class BlockController extends Controller {
       logger('controller blocks', 'Blue')
       logger(error.message, 'Red');
       console.log(data);
-      fs.writeFileSync('./eror.txt', error.message);
       process.exit();
     }
   }

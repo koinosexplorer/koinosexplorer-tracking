@@ -12,7 +12,7 @@ class Chain extends JSONRequest {
     return this.send("chain.get_head_info", data);
   }
   
-  getContract(contract_id, entry_point, args) {
+  getReadContract(contract_id, entry_point, args) {
     let message = new ProtoChain.read_contract_request();
     message.setContractId(contract_id)
     message.setEntryPoint(entry_point)

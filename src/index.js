@@ -92,11 +92,11 @@ class Tracking {
       return this.processBlock(blockNum, curBlockNum)
     }
     if(!resultBlocks) return;
+    if(Array.isArray(resultBlocks) && !resultBlocks.length) return;
 
     let initBlock = _.head(resultBlocks);
     let lastBlock = _.last(resultBlocks);
     logger(`Processing block [ ${resultBlocks.length>1 ? initBlock.block_height+" -> "+ lastBlock.block_height : initBlock.block_height } ], Head Block: ${curBlockNum}`);
-
     for (let index = 0; index < resultBlocks.length; index++) {
       
       let block = resultBlocks[index];

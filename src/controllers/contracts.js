@@ -2,8 +2,6 @@ const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: ContractsModel } = require('./../models/ContractsModel');
 const { logger } = require('./../utils');
-const { txSerializer, txSigner } = require('./../helpers/koilib');
-const { utils: UtilsKoilib } = require('koilib');
 
 // helpers
 const _ = require('lodash')
@@ -21,7 +19,7 @@ class ContractsController extends Controller {
         try {
           let transaction = transactions[index];
           let transaction_id = _.get(transaction, 'id', '');
-          let caller = "";
+          let caller = _.get(transaction, 'header.payer', '');
 
           // check operations
           if(transaction.operations) {
@@ -48,10 +46,7 @@ class ContractsController extends Controller {
                   return;
                 })
               }
-              if(operation_type == 'call_contract') {
-                
-              }
-
+              
             }
           }
         } catch (error) {
