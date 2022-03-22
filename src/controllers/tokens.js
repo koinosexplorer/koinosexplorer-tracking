@@ -1,9 +1,11 @@
 const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: TokensModel } = require('./../models/TokensModel');
+const { Model: TokensHolders } = require('./../models/TokensHolders');
 const { logger } = require('./../utils');
 const { Token } = require('./../helpers/contract');
 const bs58 = require('bs58');
+const BigNumber = require('big-number');
 
 // helpers
 const _ = require('lodash');
@@ -11,6 +13,8 @@ const _ = require('lodash');
 class TokensController extends Controller {
   constructor() {
     super({ model: TokensModel, knex: KnexPool, prefix: 'tokens' })
+
+    this.modelHolder = TokensHolders.bindKnex(KnexPool);
   }
   async processBlock(data) {
     const _block = _.get(data, 'block', {});
@@ -19,6 +23,7 @@ class TokensController extends Controller {
     const block_num = Number(_.get(_block, 'header.height'));
     const transactions = _.get(_block, 'transactions', []);
     const receipts = _.get(_receipts, 'transaction_receipts', []);
+    const receiptsBlock = _.get(_receipts, 'events', []);
 
     if(transactions.length) {
       for (let index = 0; index < transactions.length; index++) {
@@ -75,6 +80,41 @@ class TokensController extends Controller {
       }
     }
 
+    if(receiptsBlock.length) {
+
+      for (let bEvents = 0; bEvents < receiptsBlock.length; bEvents++) {
+        let event = receiptsBlock[bEvents];
+
+        // event
+        let data = _.get(event, 'data', null);
+        let source = _.get(event, 'source', null);
+        let contractExist = await this.singleQuery().where('token_id', source);
+        if(contractExist && contractExist.length > 0) {
+
+          // Mint event
+          try {
+            let _mintEvent = Token.mintEvent(data);
+            if(_mintEvent) {
+              let to = bs58.encode(_mintEvent.to);
+              let value = _mintEvent.value;
+              let queryRelationTokensSystem = await this.relationalQuery("tokens_holders").for(source).findOne({ 'holder': to });
+              if(queryRelationTokensSystem) {
+                let newAmount = new BigNumber(queryRelationTokensSystem.amount).plus(value).toString();
+                await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", to);
+              } else {
+                await this.relationalQuery("tokens_holders").for(source).insert({ holder: to, amount: new BigNumber(value).toString() })
+              }
+
+            }
+          } catch (error) { /* Not Event Mint Block */ }
+
+        }
+
+
+      }
+
+    }
+
     if(receipts.length) {
 
       for (let iReceipts = 0; iReceipts < receipts.length; iReceipts++) {
@@ -96,7 +136,7 @@ class TokensController extends Controller {
               let contractExist = await this.singleQuery().where('token_id', source);
               if(contractExist && contractExist.length > 0) {
   
-                // transfer event
+                // Transfer event
                 try {
                   let _transferEvent = Token.transferEvent(data);
                   if(_transferEvent) {
@@ -106,19 +146,52 @@ class TokensController extends Controller {
                       to: bs58.encode(_transferEvent.to),
                       value: _transferEvent.value,
                       token_id: source,
-                      transaction_id: transaction_id
+                      transaction_id: transaction_id,
+                      block_num: block_num,
                     }
                     let queryRelationTokensTx = this.relationalQuery("tokens_transactions");
                     await queryRelationTokensTx.for(source).insert(transfer);
+
+                    // update and insert if not extist - transfer to
+                    let queryRelationTokensHolderTo = await this.relationalQuery("tokens_holders").for(source).findOne('holder', transfer.to)
+                    if(queryRelationTokensHolderTo) {
+                      let newAmount = new BigNumber(queryRelationTokensHolderTo.amount).plus(_transferEvent.value).toString();
+                      await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", transfer.to);
+                    } else {
+                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: transfer.to, amount: new BigNumber(_transferEvent.value).toString() })
+                    }
+
+                    // update and insert if not extist - transfer from
+                    let queryRelationTokensHolderFom = await this.relationalQuery("tokens_holders").for(source).findOne({ 'holder': transfer.from });
+                    if(queryRelationTokensHolderFom) {
+                      let newAmount = new BigNumber(queryRelationTokensHolderFom.amount).minus(_transferEvent.value).toString();
+                      await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", transfer.from);
+                    } else {
+                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: transfer.from, amount: new BigNumber(_transferEvent.value).toString() })
+                    }
+
                   }
                 } catch (error) { /* not is transfer event*/ }
-  
+
+                // Mint event
+                try {
+                  let _mintEvent = Token.mintEvent(data);
+                  if(_mintEvent) {
+                    let to = bs58.encode(_mintEvent.to);
+                    let value = _mintEvent.value;
+                    let queryRelationTokensSystem = await this.relationalQuery("tokens_holders").for(source).findOne({ 'holder': to });
+                    if(queryRelationTokensSystem) {
+                      let newAmount = new BigNumber(queryRelationTokensSystem.amount).plus(value).toString();
+                      await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", to);
+                    } else {
+                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: to, amount: new BigNumber(value).toString() })
+                    }
+      
+                  }
+                } catch (error) { /* Not Event Mint Block */ }
   
               }
-  
-  
             }
-  
           }     
         } catch (error) {
           logger('controller tokens receipts', 'Blue')
@@ -128,6 +201,7 @@ class TokensController extends Controller {
         }
       }
     }
+
   }
 
 }

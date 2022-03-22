@@ -26,12 +26,11 @@ class TxController extends Controller {
           let transaction = transactions[index];
           let receipt = receipts.find(r => r.id == transaction_id);
 
-          let caller = ""//await txSigner(transaction);
+          let payee = _.get(transaction, 'header.payee', '')
           let payer = _.get(transaction, 'header.payer', '');
           let data = {
             transaction_id: transaction_id,
-            caller: caller,
-            payer: payer,
+            caller: payee != '' ? payee : payer,
             block_num: block_num,
           };
           

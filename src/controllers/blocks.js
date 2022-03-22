@@ -1,6 +1,7 @@
 const { KnexPool } = require('./../helpers/knex');
 const { Controller } = require('./controller');
 const { Model: BlocksModel } = require('./../models/BlocksModel');
+const { Model: TokensHolders } = require('./../models/TokensHolders');
 const { logger } = require('./../utils');
 
 // helpers

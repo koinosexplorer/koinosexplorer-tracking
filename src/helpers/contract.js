@@ -27,6 +27,16 @@ class Token {
       return null;
     }
   }
+  static mintEvent(data) {
+    try {
+      let mint_event = KRC20.mint_event.deserializeBinary(data);
+      let to = mint_event.getTo();
+      let value = mint_event.getValue();
+      return { to, value };
+    } catch (error) {
+      return null;
+    }
+  }
 }
 
 module.exports = {

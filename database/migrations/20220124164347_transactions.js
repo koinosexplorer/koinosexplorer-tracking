@@ -4,9 +4,7 @@ exports.up = function(knex) {
      * Data
      */
     table.string('transaction_id').primary();
-    
     table.string('caller').nullable();
-    table.string('payer').nullable();
     
     /**
      * Relations

@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",
+    "big-number": "^2.0.0",
     "bs58": "^4.0.1",
     "dot-object": "^2.1.4",
     "dotenv": "^10.0.0",

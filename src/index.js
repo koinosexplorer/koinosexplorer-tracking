@@ -24,7 +24,7 @@ const CONTROLLERS_FILES = [
   { name: 'contracts', controller: ContractsController },
   { name: 'tokens', controller: TokensController },
 ]
-const MAX_NB_BLOCKS_TO_FETCH = 10;
+const MAX_NB_BLOCKS_TO_FETCH = 1000;
 
 class Tracking {
   constructor() {

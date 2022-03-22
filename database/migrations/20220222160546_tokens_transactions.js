@@ -14,6 +14,7 @@ exports.up = function(knex) {
      */
     table.string('token_id').references('token_id').inTable('tokens').notNullable();
     table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable();
+    table.integer('block_num').references('block_num').inTable('blocks').notNullable();
 
     /**
      * Default data
