@@ -6,7 +6,7 @@ exports.up = function(knex) {
     table.string('operation').notNullable();
     table.string('from').notNullable();
     table.string('to').notNullable();
-    table.string('value').notNullable();
+    table.bigInteger('value').notNullable();
 
     
     /**

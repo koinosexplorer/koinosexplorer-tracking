@@ -99,14 +99,18 @@ class TokensController extends Controller {
               let value = _mintEvent.value;
               let queryRelationTokensSystem = await this.relationalQuery("tokens_holders").for(source).findOne({ 'holder': to });
               if(queryRelationTokensSystem) {
-                let newAmount = new BigNumber(queryRelationTokensSystem.amount).plus(value).toString();
+                let newAmount = Number(new BigNumber(queryRelationTokensSystem.amount).plus(value));
                 await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", to);
               } else {
-                await this.relationalQuery("tokens_holders").for(source).insert({ holder: to, amount: new BigNumber(value).toString() })
+                await this.relationalQuery("tokens_holders").for(source).insert({ holder: to, amount: Number(new BigNumber(value)) })
               }
 
             }
-          } catch (error) { /* Not Event Mint Block */ }
+          } catch (error) {
+            console.log("110",error)
+            process.exit();
+            /* Not Event Mint Block */
+          }
 
         }
 
@@ -155,19 +159,19 @@ class TokensController extends Controller {
                     // update and insert if not extist - transfer to
                     let queryRelationTokensHolderTo = await this.relationalQuery("tokens_holders").for(source).findOne('holder', transfer.to)
                     if(queryRelationTokensHolderTo) {
-                      let newAmount = new BigNumber(queryRelationTokensHolderTo.amount).plus(_transferEvent.value).toString();
+                      let newAmount = Number(new BigNumber(queryRelationTokensHolderTo.amount).plus(_transferEvent.value));
                       await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", transfer.to);
                     } else {
-                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: transfer.to, amount: new BigNumber(_transferEvent.value).toString() })
+                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: transfer.to, amount: Number(new BigNumber(_transferEvent.value)) })
                     }
 
                     // update and insert if not extist - transfer from
                     let queryRelationTokensHolderFom = await this.relationalQuery("tokens_holders").for(source).findOne({ 'holder': transfer.from });
                     if(queryRelationTokensHolderFom) {
-                      let newAmount = new BigNumber(queryRelationTokensHolderFom.amount).minus(_transferEvent.value).toString();
+                      let newAmount = Number(new BigNumber(queryRelationTokensHolderFom.amount).minus(_transferEvent.value));
                       await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", transfer.from);
                     } else {
-                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: transfer.from, amount: new BigNumber(_transferEvent.value).toString() })
+                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: transfer.from, amount: Number(new BigNumber(_transferEvent.value)) })
                     }
 
                   }
@@ -181,14 +185,17 @@ class TokensController extends Controller {
                     let value = _mintEvent.value;
                     let queryRelationTokensSystem = await this.relationalQuery("tokens_holders").for(source).findOne({ 'holder': to });
                     if(queryRelationTokensSystem) {
-                      let newAmount = new BigNumber(queryRelationTokensSystem.amount).plus(value).toString();
+                      let newAmount = Number(new BigNumber(queryRelationTokensSystem.amount).plus(value));
                       await this.relationalQuery("tokens_holders").for(source).update({ "amount": newAmount }).where("holder", to);
                     } else {
-                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: to, amount: new BigNumber(value).toString() })
+                      await this.relationalQuery("tokens_holders").for(source).insert({ holder: to, amount: Number(new BigNumber(value)) })
                     }
       
                   }
-                } catch (error) { /* Not Event Mint Block */ }
+                } catch (error) {
+                  console.log("195", error)
+                  /* Not Event Mint Block */
+                }
   
               }
             }

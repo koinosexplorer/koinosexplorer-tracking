@@ -4,7 +4,7 @@ exports.up = function(knex) {
      * Data
      */
     table.string('holder').notNullable();
-    table.string('amount').notNullable();
+    table.bigInteger('amount').notNullable();
     
     /**
      * Relations
