@@ -1,6 +1,6 @@
 [submodule "src/models"]
 	path = src/models
-	url = https://github.com/koinosexplorer/koinosexplorer-models
+	url = git@github.com:koinosexplorer/koinosexplorer-models.git
 [submodule "src/protos"]
 	path = src/protos
-	url = https://github.com/koinosexplorer/koinos-proto-commonjs
+	url = git@github.com:koinosexplorer/koinos-proto-commonjs.git
