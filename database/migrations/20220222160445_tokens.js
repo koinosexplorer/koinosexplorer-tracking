@@ -11,9 +11,9 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-    table.integer('block_num').references('block_num').inTable('blocks').notNullable();
-    table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable();
-    table.string('contract_id').references('contract_id').inTable('contracts').notNullable();
+    table.integer('block_num').references('block_num').inTable('blocks').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+    table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+    table.string('contract_id').references('contract_id').inTable('contracts').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
     
 
     /**

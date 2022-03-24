@@ -12,9 +12,9 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-    table.string('token_id').references('token_id').inTable('tokens').notNullable();
-    table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable();
-    table.integer('block_num').references('block_num').inTable('blocks').notNullable();
+    table.string('token_id').references('token_id').inTable('tokens').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+    table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
+    table.integer('block_num').references('block_num').inTable('blocks').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
 
     /**
      * Default data

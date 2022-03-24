@@ -10,7 +10,7 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-     table.integer('block_num').references('block_num').inTable('blocks').notNullable();
+     table.integer('block_num').references('block_num').inTable('blocks').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
 
 
     /**
@@ -18,6 +18,10 @@ exports.up = function(knex) {
      */
     table.timestamp('created_at')
     table.timestamp('updated_at')
+    /**
+     * Configs data
+     */
+    table.unique(['block_num','name']);
   })
 };
 

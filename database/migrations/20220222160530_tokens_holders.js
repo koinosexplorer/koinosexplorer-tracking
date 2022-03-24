@@ -9,7 +9,7 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-    table.string('token_id').references('token_id').inTable('tokens').notNullable();
+    table.string('token_id').references('token_id').inTable('tokens').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
     
 
     /**
@@ -17,6 +17,10 @@ exports.up = function(knex) {
      */
     table.timestamp('created_at')
     table.timestamp('updated_at')
+    /**
+     * Configs data
+     */
+    table.unique(['token_id','holder']);
   })
 };
 

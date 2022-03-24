@@ -10,7 +10,7 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-     table.string('contract_id').references('contract_id').inTable('contracts').notNullable();
+     table.string('contract_id').references('contract_id').inTable('contracts').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
 
 
     /**
@@ -18,6 +18,10 @@ exports.up = function(knex) {
      */
     table.timestamp('created_at')
     table.timestamp('updated_at')
+    /**
+     * Configs data
+     */
+    table.unique(['contract_id','name']);
   })
 };
 

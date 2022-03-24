@@ -10,13 +10,17 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-     table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable();
+     table.string('transaction_id').references('transaction_id').inTable('transactions').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
 
     /**
      * Default data
      */
     table.timestamp('created_at')
     table.timestamp('updated_at')
+    /**
+     * Configs data
+     */
+    table.unique(['transaction_id','name']);
   })
 };
 
