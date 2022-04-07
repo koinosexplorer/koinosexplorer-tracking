@@ -80,7 +80,7 @@ class Tracking {
     let blocksToFetch = Math.min(curBlockNum - blockNum, MAX_NB_BLOCKS_TO_FETCH);
     let resultBlocks
     try {
-      resultBlocks = await blockrpc.getBlocks(
+      let _resultBlocks = await blockrpc.getBlocks(
         _.get(this.headChain, 'head_topology.id', ''),
         blockNum,
         blocksToFetch > 0 ? blocksToFetch : 1
