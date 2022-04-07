@@ -80,19 +80,19 @@ class Tracking {
     let blocksToFetch = Math.min(curBlockNum - blockNum, MAX_NB_BLOCKS_TO_FETCH);
     let resultBlocks
     try {
-      let _resultBlocks = await blockrpc.getBlocks(
+      resultBlocks = await blockrpc.getBlocks(
         _.get(this.headChain, 'head_topology.id', ''),
         blockNum,
         blocksToFetch > 0 ? blocksToFetch : 1
       )
       resultBlocks = _.get(_resultBlocks, 'block_items', [])
+      if(!resultBlocks) throw "No data";
+      if(!Array.isArray(resultBlocks) || !resultBlocks.length) throw "No Array block"
     } catch (error) {
       console.log(error)
       await timeout(1000);
       return this.processBlock(blockNum, curBlockNum)
     }
-    if(!resultBlocks) return;
-    if(Array.isArray(resultBlocks) && !resultBlocks.length) return;
 
     let initBlock = _.head(resultBlocks);
     let lastBlock = _.last(resultBlocks);
