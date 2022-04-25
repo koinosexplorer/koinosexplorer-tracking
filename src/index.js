@@ -37,8 +37,13 @@ class Tracking {
   }
 
   async loadChain() {
-    this.headChain = await chainrpc.getHead();
-    this.curBlockNum = Number(_.get(this.headChain, 'head_topology.height', '0'));
+    try {
+      this.headChain = await chainrpc.getHead();
+      this.curBlockNum = Number(_.get(this.headChain, 'head_topology.height', '0'));
+    } catch (error) {
+      logger('error get chain', 1, 'Red');
+      console.log(error)
+    }
     await timeout(30 * 1000);
     this.loadChain();
   }
