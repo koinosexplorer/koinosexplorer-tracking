@@ -3,7 +3,7 @@ const { Request: JSONRequest } = require('./request');
 
 class Chain extends JSONRequest {
   constructor() {
-    super(process.env.RPC_NODE);
+    super(process.env.RPC_NODE.split(","));
   }
 
   getHead() {

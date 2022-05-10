@@ -3,7 +3,7 @@ const { Request: JSONRequest } = require('./request');
 
 class BlockStore extends JSONRequest {
   constructor() {
-    super(process.env.RPC_NODE);
+    super(process.env.RPC_NODE.split(","));
   }
 
   getBlocks(head_block_id, block_height, num_blocks = 1) {

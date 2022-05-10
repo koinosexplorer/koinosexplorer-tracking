@@ -2,12 +2,13 @@ const axios = require('axios');
 const { get: _get } = require('lodash');
 
 class Request {
-  constructor(endpointUrl = 'http://localhost:8080') {
-    this._client = endpointUrl;
+  constructor(endpointUrl = [ 'http://localhost:8080' ]) {
+    this._list = endpointUrl;
+    this._client = endpointUrl[0];
   }
 
-  send(typed, data) {
-    return this.__manual({
+  send(typed, data, intents = 0) {
+    let request = {
       method: "POST",
       url: this._client,
       headers: { 'content-type': 'application/json'},
@@ -17,7 +18,27 @@ class Request {
         method: typed,
         params: data,
       }
-    }, true)
+    }
+    let result
+    try {      
+      result = this.__manual(request, true)
+    } catch (error) {
+      if(intents >= this._list.length ) {
+        return error;
+      }
+      this.nodeUpdate()
+      return this.send(typed, data, intents + 1)
+    }
+    return result;
+  }
+
+  nodeUpdate() {
+    let index = this._list.indexOf(this._client)
+    if(index == this._list.length - 1) {
+      this._client = this._list[0];
+    } else {
+      this._client = this._list[index + 1];
+    }
   }
 
   async __manual (req, time_out = true) {
