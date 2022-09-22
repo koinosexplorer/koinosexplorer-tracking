@@ -40,6 +40,7 @@ class TxController extends Controller {
   
           // save metadata
           let _metadata = this.processData(transaction);
+          _metadata = _.chunk(_metadata, 100)
           for (let index = 0; index < _metadata.length; index++) {
             let metadata = _metadata[index];
             let queryRelationMetaData = this.relationalQuery("transactions_metadata");
@@ -48,6 +49,7 @@ class TxController extends Controller {
 
           // save receipt
           let _receiptData = this.processData(receipt);
+          _receiptData = _.chunk(_receiptData, 100)
           for (let index = 0; index < _receiptData.length; index++) {
             let receiptData = _receiptData[index];
             let queryRelationReceipts = this.relationalQuery("transactions_receipts");

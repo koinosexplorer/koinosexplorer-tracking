@@ -23,6 +23,7 @@ class BlockController extends Controller {
       
       // // save metadata
       let _metadata = this.processData(block);
+      _metadata = _.chunk(_metadata, 100)
       for (let index = 0; index < _metadata.length; index++) {
         let metadata = _metadata[index];
         let queryRelationMetaData = this.relationalQuery("blocks_metadata");
@@ -32,6 +33,7 @@ class BlockController extends Controller {
 
       // // save receipt
       let _receipts = this.processData(receipts);
+      _receipts = _.chunk(_receipts, 100)
       for (let index = 0; index < _receipts.length; index++) {
         let receipt = _receipts[index];
         let queryRelationReceipts = this.relationalQuery("blocks_receipts");
