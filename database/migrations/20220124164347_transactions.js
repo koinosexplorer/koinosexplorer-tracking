@@ -9,7 +9,7 @@ exports.up = function(knex) {
     /**
      * Relations
      */
-    table.integer('block_num').references('block_num').inTable('blocks').notNullable();
+    table.integer('block_num').references('block_num').inTable('blocks').notNullable().onUpdate('CASCADE').onDelete('CASCADE');
     
 
     /**
